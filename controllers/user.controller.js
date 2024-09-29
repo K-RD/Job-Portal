@@ -128,3 +128,60 @@ export const logout = async (req, res) => {
     });
   }
 };
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { fullname, email, phoneNumber, bio, skills } = req.body;
+    const file = req.file;
+    if (!fullname || !email || !phoneNumber || !bio || !skills) {
+      return res.status(400).json({
+        message: "Something is missing",
+        success: false,
+      });
+    }
+
+    // Cloudinary upload code will be here
+
+    const skillsArray = skills.split(",");
+    const userId = req.id; // userId from the middleware authentication
+
+    let user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    // Updating the user profile
+    user.fullname = fullname;
+    user.email = email;
+    user.phoneNumber = phoneNumber;
+    user.profile.bio = bio;
+    user.profile.skills = skillsArray;
+
+    // here resume will be uploaded and saved in the profile object
+
+    await user.save();
+
+    user = {
+      userId: user._id,
+      fullname: user.fullname,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      profile: user.profile,
+    };
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      user,
+      success: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
